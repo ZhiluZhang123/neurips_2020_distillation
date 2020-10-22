@@ -14,12 +14,12 @@ Zhang, Zhilu, and Mert R. Sabuncu. "Self-Distillation as Instance-Specific Label
 ## Citation 
 Please cite our paper if you find this useful, thank you! 
 
-'''
+```
 @article{zhang2020self,
   title={Self-Distillation as Instance-Specific Label Smoothing},
   author={Zhang, Zhilu and Sabuncu, Mert R},
   journal={arXiv preprint arXiv:2006.05065},
   year={2020}
 }
-'''
+```
 
