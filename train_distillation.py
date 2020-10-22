@@ -12,11 +12,14 @@ from loss import *
 from ece import *
 from tools import *
 
+parser = argparse.ArgumentParser()
+
 parser.add_argument('--dataset', default='cifar100', type=str, help='dataset used')
 parser.add_argument('--batch_size', default=128, type=int, help='batch_size')
 parser.add_argument('--num_epochs', default=150, type=int, help='num_epochs')
 parser.add_argument('--temp', default=4.0, type=float)
 parser.add_argument('--model', default='resnet', type=str)
+parser.add_argument('--alpha', default=0.4, type=float)
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--valid_size', default=5000, type=int, help='valid_size')
 parser.add_argument('--wd', default=0.0001, type=float, help='learning rate')
@@ -31,10 +34,10 @@ num_epochs = args.num_epochs
 initial_rate = args.lr
 wd = args.wd
 
-path_name = 'distillation' + args.model + '_' + args.dataset +'_numEpochs' + '_temp' + str(args.temp) 
+path_name = 'distillation' + '_' + args.model + '_' + args.dataset + '_alpha' + str(args.alpha) + '_temp' + str(args.temp) 
 
 ### load data ###
-trainloader, valloader, testloader = load_data(args.dataset, valid_size) 
+trainloader, valloader, testloader, num_classes = load_data(args.dataset, valid_size, batch_size) 
     
 ### define metrics ###
 criterion = nn.CrossEntropyLoss()
@@ -45,7 +48,7 @@ for repeat in range(args.num_repeat):
     file_name = path_name + '_expNum' + str(repeat)
     print(file_name)
     
-    for gen in range(num_gen):
+    for gen in range(args.num_gen):
         trn_loss = []
         val_loss = []
         val_acc_list = []
@@ -105,9 +108,9 @@ for repeat in range(args.num_repeat):
                         outputs_teacher = teacher(inputs_var)
                         
                     cce_loss = criterion(outputs, labels_var)
-                    soft_labels = F.softmax(outputs_teacher / temp, dim = 1)
+                    soft_labels = F.softmax(outputs_teacher / args.temp, dim = 1)
                     soft_loss = soft_cce_loss(outputs, soft_labels)
-                    loss = (1- args.beta)*cce_loss + args.beta*soft_loss
+                    loss = (1- args.alpha)*cce_loss + args.alpha*soft_loss
                      
                 loss.backward()
                 optimizer.step()
@@ -146,15 +149,14 @@ for repeat in range(args.num_repeat):
             val_acc_list += [float(correct)/total]
             
             # save model
-            if not args.dont_save:
-                if len(val_loss) == 1:
-                    # print('saved')
-                    torch.save(model.state_dict(), './saved_models/'+ file_name + 'gen_' + str(gen) + '.pth.tar')
+            if len(val_loss) == 1:
+                # print('saved')
+                torch.save(model.state_dict(), './saved_models/'+ file_name + 'gen_' + str(gen) + '.pth.tar')
 
-                else:
-                    if val_acc_list[-1] >= max(val_acc_list):
-                        #print('updated')
-                        torch.save(model.state_dict(), './saved_models/'+ file_name + 'gen_' + str(gen) + '.pth.tar')
+            else:
+                if val_acc_list[-1] >= max(val_acc_list):
+                    #print('updated')
+                    torch.save(model.state_dict(), './saved_models/'+ file_name + 'gen_' + str(gen) + '.pth.tar')
 
         
         ### evaluate trained model on test set ###
@@ -166,7 +168,7 @@ for repeat in range(args.num_repeat):
         acc = get_acc(softmaxes, labels)
         nll = nll_criterion(torch.log(softmaxes), labels).item()
         ece = ece_criterion(softmaxes, labels).item()
-        print('Student with temp = %.3f: acc: %.3f, NLL: %.3f, ECE: %.3f' % (temp, acc, nll, ece))
+        print('Student accuracy is: acc: %.3f, NLL: %.3f, ECE: %.3f' % (acc, nll, ece))
         print('--------------------------------------------')
 
 

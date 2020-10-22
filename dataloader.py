@@ -4,7 +4,7 @@ import torch.nn as nn
 from torchvision import transforms, datasets
 from torch.utils.data.sampler import SubsetRandomSampler
 
-def load_data(dataset, valid_size):
+def load_data(dataset, valid_size, batch_size):
     if dataset == 'cifar10':
         num_classes = 10
 
@@ -21,11 +21,11 @@ def load_data(dataset, valid_size):
         ])
 
         ### trainset
-        trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+        trainset = torchvision.datasets.CIFAR10(root='/home/zz452/data', train=True,
                                                 download=True, transform=transform_train)
-        valset = torchvision.datasets.CIFAR10(root='./data', train=True, 
+        valset = torchvision.datasets.CIFAR10(root='/home/zz452/data', train=True, 
                                                  transform=transform_test, download=False)
-        testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+        testset = torchvision.datasets.CIFAR10(root='/home/zz452/data', train=False,
                                                download=True, transform=transform_test)
         
         indices = torch.randperm(len(trainset))
@@ -48,11 +48,11 @@ def load_data(dataset, valid_size):
         ])
 
         ### trainset
-        trainset = torchvision.datasets.CIFAR100(root='./data', train=True,
+        trainset = torchvision.datasets.CIFAR100(root='/home/zz452/data', train=True,
                                                 download=True, transform=transform_train)
-        valset = torchvision.datasets.CIFAR100(root='./data', train=True, 
+        valset = torchvision.datasets.CIFAR100(root='/home/zz452/data', train=True, 
                                                  transform=transform_test, download=False)
-        testset = torchvision.datasets.CIFAR100(root='./data', train=False,
+        testset = torchvision.datasets.CIFAR100(root='/home/zz452/data', train=False,
                                                download=True, transform=transform_test)
         
         indices = torch.randperm(len(trainset))
@@ -97,4 +97,4 @@ def load_data(dataset, valid_size):
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              shuffle=False, drop_last = False, num_workers=2) 
     
-    return trainloader, valloader, testloader
+    return trainloader, valloader, testloader, num_classes

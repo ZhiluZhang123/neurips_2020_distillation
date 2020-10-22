@@ -23,9 +23,11 @@ parser.add_argument('--lamda', default=0.999, type=float)
 parser.add_argument('--batch_size', default=128, type=int, help='batch_size')
 parser.add_argument('--num_epochs', default=150, type=int, help='num_epochs')
 parser.add_argument('--num_repeat', type=int, default=5)
+
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--wd', default=0.0001, type=float, help='learning rate')
 parser.add_argument('--valid_size', default=5000, type=int, help='valid_size')
+parser.add_argument('--dont_save', action="store_true", help='dont save model')
 
 args = parser.parse_args()
 
@@ -42,9 +44,10 @@ path_name = args.model + '_lossType' + loss_type + '_dataset' + args.dataset + '
             str(args.beta) + '_alpha' + str(args.alpha)
 
 ### load data ###
-trainloader, valloader, testloader = load_data(args.dataset, valid_size) 
+trainloader, valloader, testloader, num_classes = load_data(args.dataset, valid_size, batch_size) 
 
-### define metrics for eval ###
+### define metrics ###
+criterion = nn.CrossEntropyLoss()
 nll_criterion = nn.NLLLoss().cuda()
 ece_criterion = ECELoss().cuda()
 
@@ -111,7 +114,7 @@ for repeat in range(args.num_repeat):
                     outputs_orig = ema_model(inputs_var)
             
             if loss_type == 'beta':
-                beta_loss = soft_beta_loss(outputs, labels_var, beta, outputs_orig)
+                beta_loss = soft_beta_loss(outputs, labels_var, beta, outputs_orig, num_classes=num_classes)
                 loss = (1-alpha)*criterion(outputs, labels_var) + alpha*beta_loss
                 
             elif loss_type == 'smoothing':
@@ -170,15 +173,14 @@ for repeat in range(args.num_repeat):
         val_acc_list += [float(correct) / total]
 
         # save model based on validation accuracy
-        if not args.dont_save:
-            if len(val_loss) == 1:
-                #print('saved')
-                torch.save(model.state_dict(), './saved_models/'+ file_name + '.pth.tar')
+        if len(val_loss) == 1:
+            #print('saved')
+            torch.save(model.state_dict(), './saved_models/'+ file_name + '.pth.tar')
 
-            else:
-                if val_acc_list[-1] >= max(val_acc_list):
-                    #print('updated')
-                    torch.save(model.state_dict(), './saved_models/'+ file_name + '.pth.tar')
+        else:
+            if val_acc_list[-1] >= max(val_acc_list):
+                #print('updated')
+                torch.save(model.state_dict(), './saved_models/'+ file_name + '.pth.tar')
         
     ### evaluate model ###
     model.load_state_dict(torch.load('./saved_models/'+ file_name + '.pth.tar'))
@@ -188,5 +190,5 @@ for repeat in range(args.num_repeat):
     acc = get_acc(softmaxes, labels)
     nll = nll_criterion(torch.log(softmaxes), labels).item()
     ece = ece_criterion(softmaxes, labels).item()
-    print('acc: %.3f, NLL: %.3f, ECE: %.3f' % (acc, nll, ece))
+    print('Accuracy on testset is: %.3f, NLL: %.3f, ECE: %.3f' % (acc, nll, ece))
     print('--------------------------------------------')

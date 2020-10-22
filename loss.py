@@ -1,9 +1,10 @@
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-def soft_beta_loss(outputs, labels, beta, outputs_orig):
+def soft_beta_loss(outputs, labels, beta, outputs_orig, num_classes=10):
 
     softmaxes = F.softmax(outputs, dim=1)
     n, num_classes = softmaxes.shape
@@ -42,7 +43,7 @@ def get_entropy(outputs):
 
     return loss
 
-def soft_cce_loss(outputs, labels, num_classes = num_classes, epsilon=0.0):
+def soft_cce_loss(outputs, labels, num_classes = 10, epsilon=0.0):
     outputs = F.softmax(outputs, dim=1)
 
     if labels[0].dim() == 0:
