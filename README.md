@@ -6,6 +6,8 @@ This repository contains implementation for our paper "Self-Distillation as Inst
 Zhang, Zhilu, and Mert R. Sabuncu. "Self-Distillation as Instance-Specific Label Smoothing." arXiv preprint arXiv:2006.05065 (2020). https://arxiv.org/abs/2006.05065
 
 ## Content
+`ece.py` contains the code for expected calibration error.
+
 `train_sitillation.py` contains the script for training multi-generational self-distillation. 
 
 `train_smoothing.py` contains the script for training with various kinds of smoothing techniques, including regular label smoothing, the proposed Beta smoothing and also regular cross entropy with entropy regularization.
